@@ -39,6 +39,18 @@ pipeline{
                 }
             }
         }
-    
+
+        stage("Quality Gate Analysis"){
+            steps {
+                script {
+                    // abortPipeline: true will fail the build if the code fails your quality thresholds
+                    def qg = waitForQualityGate abortPipeline: true
+                    if (qg.status != 'OK') {
+                        error "Pipeline aborted due to SonarQube Quality Gate failure: ${qg.status}"
+                    }
+                }
+            }
+        }
+
     }
 }
