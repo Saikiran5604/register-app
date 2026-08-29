@@ -32,12 +32,14 @@ pipeline{
         stage("SonarQube Analysis"){
             steps {
                 script {
-                    withSonarQubeEnv(credentialsId: 'jenkins-sonarqube-token'){
-                        sh 'mvn sonar:sonar'
+                    withSonarQubeEnv('jenkins-sonarqube-token'){
+                        // Using the fully qualified plugin version avoids prefix resolution errors
+                        sh 'mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.11.0.3922:sonar'
                     }
                 }
             }
         }
+
     
     }
 }
