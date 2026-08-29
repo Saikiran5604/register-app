@@ -13,7 +13,7 @@ pipeline{
 
         stage("Checkout from SCM"){
             steps {
-                git branch: 'main', credentialsId: 'github', url: 'https://github.com/Saikiran5604/register-app'
+                git branch: 'main', credentialsId: 'github', url: 'https://github.com'
             }
         }
 
@@ -32,14 +32,13 @@ pipeline{
         stage("SonarQube Analysis"){
             steps {
                 script {
-                    withSonarQubeEnv('jenkins-sonarqube-token'){
-                        // Using the fully qualified plugin version avoids prefix resolution errors
+                    // This matches the exact Name from your system settings screen
+                    withSonarQubeEnv('sonarqube-server'){
                         sh 'mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.11.0.3922:sonar'
                     }
                 }
             }
         }
-
     
     }
 }
