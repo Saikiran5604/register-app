@@ -114,10 +114,23 @@ pipeline {
         stage("Trigger CD pipeline"){
             steps {
                 script {
-                    sh "curl -v -k --user clouduser:${JENKINS_API_TOKEN} -X POST -H 'cache-control: no-cache' -H 'content-type: application/x-www-form-urlencoded' --data 'IMAGE_TAG=${IMAGE_TAG}' 'ec2-54-144-87-72.compute-1.amazonaws.com:8080/job/gitops-register-app-cd/buildWithParameters?token=gitops-token'"
+                    // Correctly pulls your credential secret text without leaking it in GStrings
+                    withCredentials([string(credentialsId: 'JENKINS_API_TOKEN', variable: 'TOKEN')]) {
+                        
+                        // Use single quotes (') around the main shell command to prevent Groovy interpolation
+                        // Notice the username is corrected to 'cloud-user'
+                        sh '''
+                            curl -v -k --user "cloud-user:${TOKEN}" \
+                            -H "cache-control: no-cache" \
+                            -H "content-type: application/x-www-form-urlencoded" \
+                            --data "IMAGE_TAG=${IMAGE_TAG}" \
+                            "http://amazonaws.com"
+                        '''
+                    }
                 }
             }
         }
+
     
     }
 }
