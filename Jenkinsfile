@@ -62,19 +62,23 @@ pipeline{
             }
         }
 
-        stage("Build & push Docker Image"){
+        stage("Build & Push Docker Image"){
             steps {
                 script {
+                    // Changing the first argument from '' to 'https://docker.io' is the key fix
                     docker.withRegistry('https://docker.io', "${env.DOCKER_CREDENTIALS_ID}") {
+                        
                         // Builds image with the calculated tag definition
                         def docker_image = docker.build("${env.IMAGE_NAME}:${env.IMAGE_TAG}")
-                        // Pushes both the versioned tag and the 'latest' alias tags to DockerHub
+                        
+                        // Pushes both tags explicitly using the authenticated context
                         docker_image.push()
                         docker_image.push('latest')
                     }
                 }
             }
         }
+
 
     }
 }
