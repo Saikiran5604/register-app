@@ -103,10 +103,11 @@ pipeline {
             steps {
                 // This block safely injects the token now without global mapping collision
                 withCredentials([string(credentialsId: 'jenkins-api-token', variable: 'JENKINS_API_TOKEN')]) {
-                    // Using single quotes keeps variables protected inside Jenkins engine logs
-                    sh 'curl -v -k --user "cloud-user:${JENKINS_API_TOKEN}" -X POST -H "cache-control: no-cache" -H "content-type: application/x-www-form-urlencoded" --data "IMAGE_TAG=${env.IMAGE_TAG}" "http://54.144.87.72:8080/job/gitops-register-app/buildWithParameters?token=gitOps-token"'
+                    // FIXED: Appended '-cd' to the target job name to mirror your live Jenkins dashboard!
+                    sh 'curl -v -k --user "cloud-user:${JENKINS_API_TOKEN}" -X POST -H "cache-control: no-cache" -H "content-type: application/x-www-form-urlencoded" --data "IMAGE_TAG=${env.IMAGE_TAG}" "http://54.144.87"'
                 }
             }
         }
+
     }
 }
