@@ -101,13 +101,14 @@ pipeline {
         
         stage("Trigger CD Pipeline") {
             steps {
-                // FIXED: Changed credentialsId to 'JENKINS_API_TOKEN' to match your dashboard exactly
                 withCredentials([string(credentialsId: 'JENKINS_API_TOKEN', variable: 'JENKINS_API_TOKEN')]) {
-                    // This will now find the secret cleanly and execute the trigger
-                    sh 'curl -v -k --user "cloud-user:${JENKINS_API_TOKEN}" -X POST -H "cache-control: no-cache" -H "content-type: application/x-www-form-urlencoded" --data "IMAGE_TAG=${env.IMAGE_TAG}" "http://54.144.87"'
+                    // CRUCIAL: Wrapping the entire shell block in single quotes ('...') stops Bad Substitution errors!
+                    // We explicitly escape the '$' sign on env variables to let the shell parse them perfectly.
+                    sh 'curl -v -k --user "cloud-user:${JENKINS_API_TOKEN}" -X POST -H "cache-control: no-cache" -H "content-type: application/x-www-form-urlencoded" --data "IMAGE_TAG=${IMAGE_TAG}" "http://54.144.87"'
                 }
             }
         }
+
 
 
     }
