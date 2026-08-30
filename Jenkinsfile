@@ -89,6 +89,26 @@ pipeline {
                 }
             }
         }
+
+        stage("Trivial Scan"){
+            steps {
+                sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --no-progress --scanners vuln --exit-code 0 --severity HIGH,CRITICAL --format table ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+            }
+        }
+
+        stage("Cleanup Local Images"){
+            steps {
+                script {
+                    // Added -f to force clean and env. to ensure correct variable tracking
+                    sh "docker rmi -f ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                    sh "docker rmi -f ${env.IMAGE_NAME}:latest"
+                    
+                    // CRUCIAL: Sweeps away hidden dangling build caches to protect your 15GB disk!
+                    sh "docker image prune -f"
+                }
+            }
+        }
+
     
     }
 }
