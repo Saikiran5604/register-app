@@ -111,20 +111,20 @@ pipeline {
             }
         }
         
-        stage("Trigger CD pipeline"){
+        stage("Trigger CD Pipeline") {
+            environment {
+                // We define the full target URL as a clean variable here
+                CD_JOB_URL = "http://amazonaws.com"
+            }
             steps {
                 script {
                     withCredentials([string(credentialsId: 'JENKINS_API_TOKEN', variable: 'TOKEN')]) {
-                        // Explicit string breaking blocks ensure Jenkins preserves the complete URL string path
-                        sh "curl -v -k --user \"cloud-user:\$TOKEN\" " +
-                           "-H \"cache-control: no-cache\" " +
-                           "-H \"content-type: application/x-www-form-urlencoded\" " +
-                           "--data \"IMAGE_TAG=${env.IMAGE_TAG}\" " +
-                           "\"http://amazonaws.com\""
+                        // Single quotes ensure that Linux, not Groovy, handles the variable expansion safely
+                        sh 'curl -v -k --user "cloud-user:${TOKEN}" -X POST -H "cache-control: no-cache" -H "content-type: application/x-www-form-urlencoded" --data "IMAGE_TAG=${IMAGE_TAG}" "${CD_JOB_URL}"'
                     }
                 }
             }
         }
-    
+
     }
 }
