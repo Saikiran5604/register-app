@@ -112,15 +112,11 @@ pipeline {
         }
         
         stage("Trigger CD Pipeline") {
-            environment {
-                // We define the full target URL as a clean variable here
-                CD_JOB_URL = "http://amazonaws.com"
-            }
             steps {
                 script {
                     withCredentials([string(credentialsId: 'JENKINS_API_TOKEN', variable: 'TOKEN')]) {
-                        // Single quotes ensure that Linux, not Groovy, handles the variable expansion safely
-                        sh 'curl -v -k --user "cloud-user:${TOKEN}" -X POST -H "cache-control: no-cache" -H "content-type: application/x-www-form-urlencoded" --data "IMAGE_TAG=${IMAGE_TAG}" "${CD_JOB_URL}"'
+                        // Double quotes allow Jenkins to expand your API token and image tags cleanly!
+                        sh "curl -v -k --user 'cloud-user:${TOKEN}' -X POST -H 'cache-control: no-cache' -H 'content-type: application/x-www-form-urlencoded' --data 'IMAGE_TAG=${env.IMAGE_TAG}' 'http://amazonaws.com'"
                     }
                 }
             }
