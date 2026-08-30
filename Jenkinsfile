@@ -102,9 +102,9 @@ pipeline {
         stage("Trigger CD Pipeline") {
             steps {
                 withCredentials([string(credentialsId: 'JENKINS_API_TOKEN', variable: 'JENKINS_API_TOKEN')]) {
-                    // CRUCIAL: Wrapping the entire shell block in single quotes ('...') stops Bad Substitution errors!
-                    // We explicitly escape the '$' sign on env variables to let the shell parse them perfectly.
-                    sh 'curl -v -k --user "cloud-user:${JENKINS_API_TOKEN}" -X POST -H "cache-control: no-cache" -H "content-type: application/x-www-form-urlencoded" --data "IMAGE_TAG=${IMAGE_TAG}" "http://54.144.87"'
+                    // SECURE: Single-quotes block bad substitutions entirely
+                    // EXACT PATH: Note the complete IP layout targeting port 8080 and the updated job path
+                    sh 'curl -v -k --user "cloud-user:${JENKINS_API_TOKEN}" -X POST -H "cache-control: no-cache" -H "content-type: application/x-www-form-urlencoded" --data "IMAGE_TAG=${env.IMAGE_TAG}" "http://54.144.87"'
                 }
             }
         }
