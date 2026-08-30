@@ -114,19 +114,20 @@ pipeline {
         stage("Trigger CD pipeline"){
             steps {
                 script {
+                    // Safe credential wrapping structure
                     withCredentials([string(credentialsId: 'JENKINS_API_TOKEN', variable: 'TOKEN')]) {
-                        // Singular quotes ensure the shell processes the evaluation strings cleanly
-                        sh '''
-                            curl -v -k --user "cloud-user:${TOKEN}" \
-                            -H "cache-control: no-cache" \
-                            -H "content-type: application/x-www-form-urlencoded" \
-                            --data "IMAGE_TAG=${IMAGE_TAG}" \
-                            "http://amazonaws.com"
-                        '''
+                        
+                        // Regular double quotes allow Jenkins to substitute all variables into the shell cleanly
+                        sh "curl -v -k --user 'cloud-user:${TOKEN}' " +
+                           "-H 'cache-control: no-cache' " +
+                           "-H 'content-type: application/x-www-form-urlencoded' " +
+                           "--data 'IMAGE_TAG=${env.IMAGE_TAG}' " +
+                           "'http://amazonaws.com'"
                     }
                 }
             }
         }
+
 
 
     
