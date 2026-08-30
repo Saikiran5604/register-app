@@ -14,8 +14,8 @@ pipeline {
         
         IMAGE_NAME  = "${DOCKER_USER}/${APP_NAME}"
         IMAGE_TAG   = "${RELEASE}-${BUILD_NUMBER}"
-        JENKINS_API_TOKEN = credentials("JENKINS_API_TOKEN")
         
+        // FIXED: Removed the global JENKINS_API_TOKEN declaration to avoid step block collision
     }
 
     stages {
@@ -67,32 +67,23 @@ pipeline {
         stage("Build & Push Docker Image"){
             steps {
                 script {
-                    // Wires your 'dockerhub' credentials safely into temporary env tokens
                     withCredentials([usernamePassword(credentialsId: "${env.DOCKER_CREDENTIALS_ID}", 
                                                       usernameVariable: 'DOCKER_USER_ENV', 
                                                       passwordVariable: 'DOCKER_TOKEN_ENV')]) {
                         
-                        // 1. Authenticate the host daemon explicitly via standard shell
                         sh "echo \$DOCKER_TOKEN_ENV | docker login -u \$DOCKER_USER_ENV --password-stdin"
-                        
-                        // 2. Build the image locally
                         sh "docker build -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} ."
-                        
-                        // 3. Tag the image alias for 'latest'
                         sh "docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${env.IMAGE_NAME}:latest"
-                        
-                        // 4. Push both tags cleanly via the authenticated shell session
                         sh "docker push ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
                         sh "docker push ${env.IMAGE_NAME}:latest"
-                        
-                        // 5. Clean up authentication footprint from the agent
                         sh "docker logout"
                     }
                 }
             }
         }
 
-        stage("Trivial Scan"){
+        // FIXED: Corrected stage name spelling to match the architecture layout
+        stage("Trivy Scan"){
             steps {
                 sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --no-progress --scanners vuln --exit-code 0 --severity HIGH,CRITICAL --format table ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
             }
@@ -101,11 +92,8 @@ pipeline {
         stage("Cleanup Local Images"){
             steps {
                 script {
-                    // Added -f to force clean and env. to ensure correct variable tracking
                     sh "docker rmi -f ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
                     sh "docker rmi -f ${env.IMAGE_NAME}:latest"
-                    
-                    // CRUCIAL: Sweeps away hidden dangling build caches to protect your 15GB disk!
                     sh "docker image prune -f"
                 }
             }
@@ -113,14 +101,12 @@ pipeline {
         
         stage("Trigger CD Pipeline") {
             steps {
-                script {
-                    withCredentials([string(credentialsId: 'JENKINS_API_TOKEN', variable: 'TOKEN')]) {
-                        // Double quotes allow Jenkins to expand your API token and image tags cleanly!
-                        sh "curl -v -k --user 'cloud-user:${TOKEN}' -X POST -H 'cache-control: no-cache' -H 'content-type: application/x-www-form-urlencoded' --data 'IMAGE_TAG=${env.IMAGE_TAG}' 'http://amazonaws.com'"
-                    }
+                // This block safely injects the token now without global mapping collision
+                withCredentials([string(credentialsId: 'jenkins-api-token', variable: 'JENKINS_API_TOKEN')]) {
+                    // Using single quotes keeps variables protected inside Jenkins engine logs
+                    sh 'curl -v -k --user "cloud-user:${JENKINS_API_TOKEN}" -X POST -H "cache-control: no-cache" -H "content-type: application/x-www-form-urlencoded" --data "IMAGE_TAG=${env.IMAGE_TAG}" "http://54.144.87.72:8080/job/gitops-register-app/buildWithParameters?token=gitOps-token"'
                 }
             }
         }
-
     }
 }
