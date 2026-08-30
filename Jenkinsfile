@@ -114,11 +114,8 @@ pipeline {
         stage("Trigger CD pipeline"){
             steps {
                 script {
-                    // Correctly pulls your credential secret text without leaking it in GStrings
                     withCredentials([string(credentialsId: 'JENKINS_API_TOKEN', variable: 'TOKEN')]) {
-                        
-                        // Use single quotes (') around the main shell command to prevent Groovy interpolation
-                        // Notice the username is corrected to 'cloud-user'
+                        // Singular quotes ensure the shell processes the evaluation strings cleanly
                         sh '''
                             curl -v -k --user "cloud-user:${TOKEN}" \
                             -H "cache-control: no-cache" \
@@ -130,6 +127,7 @@ pipeline {
                 }
             }
         }
+
 
     
     }
