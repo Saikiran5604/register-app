@@ -4,6 +4,16 @@ pipeline{
         jdk 'java21'
         maven 'Maven3'
     }
+
+    environment {
+        APP_NAME = "register-app-pipeline"
+        RELEASE = "1.0.0"
+        DOCKER_USER = "saikiranreddy5604"
+        DOCKER_CREDENTIALS_ID = "dockerhub"
+        IMAGE_NAME = "${DOCKER_USER}/${APP_NAME}"
+        IMAGE_TAG = "${RELEASE}-${BUILD_NUMBER}"
+    }
+
     stages {
         stage("Cleanup Workspace"){
             steps {
@@ -47,6 +57,20 @@ pipeline{
                     def qg = waitForQualityGate abortPipeline: true
                     if (qg.status != 'OK') {
                         error "Pipeline aborted due to SonarQube Quality Gate failure: ${qg.status}"
+                    }
+                }
+            }
+        }
+
+        stage("Build & push Docker Image"){
+            steps {
+                script {
+                    docker.withRegistry('https://docker.io', "${env.DOCKER_CREDENTIALS_ID}") {
+                        // Builds image with the calculated tag definition
+                        def docker_image = docker.build("${env.IMAGE_NAME}:${env.IMAGE_TAG}")
+                        // Pushes both the versioned tag and the 'latest' alias tags to DockerHub
+                        docker_image.push()
+                        docker_image.push('latest')
                     }
                 }
             }
